@@ -2,11 +2,11 @@ val arm = (project in file(".")).
   settings(
     organization := "io.tmos",
     name := "arm4s",
-    version := "0.0.1-SNAPSHOT",
     scalaVersion := "2.12.0",
     crossScalaVersions := Seq("2.10.6", "2.11.8", "2.12.1"),
-    scalacOptions += "-deprecation",
-    scalacOptions += "-feature",
+    scalacOptions ++= Seq("-deprecation", "-feature", "-Xfatal-warnings"),
+    scalacOptions in (Compile, doc) ++= Seq("-groups", "-implicits"),
+    autoAPIMappings := true,
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test",
     licenses := Seq("BSD-3-Clause" -> url("https://opensource.org/licenses/BSD-3-Clause")),
     homepage := Some(url("https://github.com/tmoschou/arm4s")),
@@ -32,5 +32,4 @@ val arm = (project in file(".")).
           <url>http://tmos.io/</url>
         </developer>
       </developers>
-
   )
