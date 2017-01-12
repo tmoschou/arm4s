@@ -1,121 +1,200 @@
 package io.tmos
 
-import scala.util.control.ControlThrowable
-
 /**
- * Provides Automatic Resource Management.
+ * ARM4S - Automatic Resource Management for Scala
  *
- * This package provides a way of succinctly dealing with resources in an exception safe manner,
- * exactly the same behaviour as Java's `try`-with-resources statement.
+ * This library provides a way of succinctly dealing with resources in an exception safe manner. The behaviour
+ * is identical to Java's exception handling in `try`-with-resources statement and a substitute for scala which does not
+ * have an equivalent construct natively.
  *
- * By importing this package object in scope with `import io.tmos.arm._`, any object
- * implementing the [[io.tmos.arm.CanManage]] trait may be used to construct
- * a [[io.tmos.arm.ManagedResource]] by passing it to the [[io.tmos.arm.manage(Resource)]] method.
+ * Unlike Java's try-with-resource constructs, managed resources are not limited to `java.lang.AutoClosable`s.
+ * Further types such as `java.util.concurrent.ExecutorService` can be supported with implicit converters in user code.
+ * See examples below. Also unlike try-with-resource constructs, ARM4S's managed block (the body) can
+ * actually yield results, ensuring that resources are closed properly before returning.
  *
- * Note that any [[java.lang.AutoCloseable]], else any object who's structural type
- * has the member `def close()` will implicitly be converted to a [[io.tmos.arm.CanManage]]
+ * For example: Parse multiple resources implicitly and yield a result
+ * {{{
+ *     import io.tmos.arm.implicits._
+ *     import java.io._
+ *     import java.net.{Socket, InetAddress, ServerSocket}
+ *
+ *     val line = for {
+ *       socket <- new Socket(InetAddress.getLoopbackAddress, port)
+ *       out <- new PrintWriter(socket.getOutputStream, true)
+ *       in <- new BufferedReader(new InputStreamReader(socket.getInputStream))
+ *     } yield {
+ *       val line = in.readLine()
+ *       out.println(line.toUpperCase)
+ *       return line
+ *     }
+ * }}}
+ * For more examples see, the Examples section below.
+ *
+ * == Exception Behaviour ==
+ * This library differs from other Scala ARM libraries in that it has been designed with consideration for different
+ * exception scenarios and with the following goals regarding exception safe behaviour:
+ *
+ * 1. The `withFinally` method (see [[io.tmos.arm.CanManage.withFinally]]) of a managed resource (e.g. delegates to `close` of `AutoCloseable`s)
+ *    must be called even if the body throws _any_ `Throwable` exception including fatal ones. Example of fatal exceptions
+ *    include anything not matched by [[scala.util.control.NonFatal$]] such as `InterruptedException`,
+ *    [[scala.util.control.ControlThrowable]] and `VirtualMachineError`. Any exception must be immediately rethrown after withFinally,
+ *    in fact this is a requirement of fatal exceptions.
+ *
+ * 2. The `withFinally` method in a finally clause may also throw any `Throwable` too. Unfortunately this is a possibility
+ *    and permitted by `AutoCloseable` which can throw any `Throwable` (Any `Exception` plus `Error` which are
+ *    unchecked).
+ *
+ * 3. Importantly, any `Throwable` thrown by `withFinally` must not mask (suppress) any exception thrown firstly by the body,
+ *    if any. Instead it should catch and recorded as a suppressed exception against the original (currently throwing)
+ *    exception, and certainly not vice-versa. This is what Java's try with resource construct effectively does; for more
+ *    details, see Oracle's tech article on
+ *    (Try-with-resources)[http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html].
+ *
+ * == Using ARM4S ==
+ *
+ * There are two ways you can import arm4s.
+ *
+ * For explicit resource management
+ * {{{
+ *     import io.tmos.arm._
+ *     for (r <- manage(resource))
+ *       ...
+ * }}}
+ * Or implicitly
+ * {{{
+ *     import io.tmos.arm.implicits._
+ *     for (r <- resource)
+ *        ...
+ * }}}
+ * Any resource of type `T` for which an implicit `CanManage[T]` object is provided in scope can be managed.
+ *
+ * By default the following `CanManage[T]` that are automatically provided in scope on import
+ *   * `type T = java.lang.AutoClosable`
+ *   * `type T = { def close() }` - via scala reflection
  *
  * Managed resources may be composed together/chained in a monadic manner that allows for optionally yielding
  * results or imperatively using `for`-comprehensions.
  *
- * The managed resources are automatically closed, and in reverse declaration order `for`-comprehension.
+ * The managed resources are automatically closed, and in reverse declaration order.
  *
  * The resources are closed in a `finally` clause regardless of any exception thrown in the body of the
- * `for`-comprehension, or any prior `close()` called on other resources.
+ * `for`-comprehension, or any prior `withFinally` called on other resources.
  *
  * == Examples ==
  * Imperatively
  * {{{
- *   import io.tmos.arm._
- *   val lines: Seq[String] = for (inputStream <- managed(new FileInputStream("data.json")) yield {
- *     Json.parse(inputStream).as[Seq[String]]
- *   }
+ *     import io.tmos.arm._
+ *     val lines: Seq[String] = for (inputStream <- managed(new FileInputStream("data.json")) yield {
+ *       Json.parse(inputStream).as[Seq[String]]
+ *     }
  * }}}
- *
+ * which translates the the following monadic style
+ * {{{
+ *     import io.tmos.arm._
+ *     val lines = managed(new FileInputStream("data.json")) map { inputStream =>
+ *        Json.parse(inputStream).as[Seq[String]]
+ *     }
+ * }}}
  * or if composing multiple resources this can be done easily too
  * {{{
- *   import io.tmos.arm._
- *   val lines: Seq[String] = for {
- *     x <- managed(new FileInputStream("dataset-1.json")
- *     y <- managed(new FileInputStream("dataset-2.json")
- *     z <- managed(new FileInputStream("dataset-3.json")
- *   } yield {
- *     Json.parse(x).as[Seq[String]] ++
- *     Json.parse(y).as[Seq[String]] ++
- *     Json.parse(z).as[Seq[String]]
- *   }
+ *     import io.tmos.arm._
+ *     val result = for {
+ *       a <- managed(new A)
+ *       b <- managed(new B(a))
+ *       c <- managed(new C)
+ *     } yield {
+ *       ...
+ *     }
  * }}}
- *
- * This `for`-comprehension translates by the compiler to the following monadic style that is also supported
- * (but more verbose).
+ * Note that this is NOT the same as
  * {{{
- *    import io.tmos.arm._
- *    val lines: Seq[String] =
- *      managed(new FileInputStream("dataset-1.json") flatMap { x =>
- *        managed(new FileInputStream("dataset-2.json") flatMap { y =>
- *          managed(new FileInputStream("dataset-3.json") map { z =>
- *            Json.parse(x).as[Seq[String]] ++
- *            Json.parse(y).as[Seq[String]] ++
- *            Json.parse(z).as[Seq[String]]
- *          }
- *        }
- *      }
+ *     val a : A = new A
+ *     val b : B = new B(a)
+ *     val c : C = new C
+ *
+ *     val result try {
+ *       ...
+ *     } finally {
+ *       c.close
+ *       b.close
+ *       a.close
+ *     }
  * }}}
+ * For example if `new B(a)` threw an exception then `a` would not be closed. Likewise if `c.close` threw an exception, then
+ * `a` and `b` would not be closed. The equivalent code using multiple `try` statements gets messy very quickly.
+ * See Oracle's tech article on
+ * (Try-with-resources)[http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html] for an example.
  *
- * Note that the [[io.tmos.arm.ManagedResource.apply()]] method is also conveniently provided so as to drop
- * the need to write `map`, `flatMap` or `foreach` in the above.
+ * == Comprehensive Example ==
  *
- * Likewise a managed body need not return/yield a result
+ * Here is a comprehensive example of managing multiple resources implcitly
+ * including an `ExectorService` which we provide the custom `withFinally` logic for, that runs a tcp service in a separate
+ * thread which echos back text in uppercase.
  * {{{
- *   import io.tmos.arm._
- *   for {
- *     readSocket <- managed(new Socket(...))
- *     writeSocket <- managed(new Socket(...))
- *   } Util.pipe(readSocket, writeSocket)
+ *     import io.tmos.arm.implicits._
+ *     import scala.collection.JavaConverters._
+ *
+ *     implicit val canManageExectorService = new CanManage[ExecutorService] {
+ *       override def withFinally(pool: ExecutorService): Unit = {
+ *         pool.shutdown() // Disable new tasks from being submitted
+ *         try {
+ *           if (!pool.awaitTermination(10, TimeUnit.SECONDS)) { // wait for normal termination
+ *             pool.shutdownNow() // force terminate
+ *             if (!pool.awaitTermination(10, TimeUnit.SECONDS)) // wait for forced termination
+ *               throw new RuntimeException("ExecutorService did not terminate")
+ *           }
+ *         } catch {
+ *           case e: InterruptedException =>
+ *             pool.shutdownNow()  // (Re-)Cancel if current thread also interrupted
+ *             Thread.currentThread().interrupt()  // Preserve interrupt status
+ *         }
+ *       }
+ *     }
+ *
+ *     val port = new CompletableFuture[Int]
+ *
+ *     val callable = new Callable[Unit] {
+ *       override def call(): Unit = {
+ *         for (ss <- new ServerSocket(0, 0, InetAddress.getLoopbackAddress)) {
+ *           port.complete(ss.getLocalPort)
+ *           for {
+ *             connection <- ss.accept
+ *             out <- new PrintWriter(connection.getOutputStream, true)
+ *             in <- new BufferedReader(new InputStreamReader(connection.getInputStream))
+ *             line <- in.lines().iterator().asScala // note not a resource, but now a traversable
+ *           } out.println(line.toUpperCase)
+ *         }
+ *       }
+ *     }
+ *
+ *     // manage an executor service using the user defined canManageExectorService.
+ *     // This will shutdown and wait termination
+ *     val completedFuture = for (executorService <- Executors.newSingleThreadExecutor()) yield {
+ *       val future = executorService.submit(callable)
+ *       val upperPhrase = for {
+ *         s <- new Socket(InetAddress.getLoopbackAddress, port.get)
+ *         out <- new PrintWriter(s.getOutputStream, true)
+ *         in <- new BufferedReader(new InputStreamReader(s.getInputStream))
+ *       } yield {
+ *         out.println("hello")
+ *         out.println("world")
+ *         in.readLine() + ' ' + in.readLine()
+ *       }
+ *       assert(upperPhrase === "HELLO WORLD")
+ *       future
+ *     }
+ *
+ *     assert(completedFuture.isCancelled || completedFuture.isDone)
+ *     completedFuture.get() // should not block
  * }}}
- *
- * or
- * {{{
- *    import io.tmos.arm._
- *    managed(new Socket(...)) foreach { readSocket =>
- *      managed(new Socket(...)) forach { writeSocket =>
- *        Util.pipe(readSocket, writeSocket)
- *      }
- *    }
- * }}}
- * Again
- *
- *
- * == Exception Behaviour ==
- * The library has been designed with the following goals regarding exception safe behaviour and identical to
- * Java's `try`-with-resource statement behaviour.
- *
- * 1. The `close` method must be called even if the body throws any [[Throwable]] (possibly fatal) exception.
- *    Example of fatal exceptions include anything not matched by [[scala.util.control.NonFatal]] such as
- *    [[InterruptedException]], [[ControlThrowable]] and [[VirtualMachineError]]. Note that any fatal exception must
- *    be immediately rethrown after close (in fact we just throw everything); as such a `finally` clause is used to
- *    handle the `close`.
- *
- * 2. The close method in a finally clause may also throw any [[Throwable]] too. Unfortunately this is a possibility
- *    and permitted by [[java.lang.AutoCloseable]] which can throw any [[Exception]] plus any [[Error]] which are
- *    unchecked.
- *
- * 3. Any exception thrown in the `finally` clause must not mask (suppress) any exception thrown firstly by the body,
- *    if any. Instead it should caught and recorded as a suppressed exception against the original (currently throwing)
- *    exception, and certainly not vice-versa.
- *
- * For more details on proper exception handling of resources, see
- * [[http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html]].
- *
- * Many libraries don't get this right, and result in suppressed exceptions making debugging difficult.
  */
 package object arm {
 
   /**
-   * Manages a [[CanManage]].
+   * Explicitly manages a resource. For implicit management see `io.tmos.arm.implicits`
    *
    * Note that the resource is passed by-name and as it not evaluated until the construct is applied
-   * over the body.
+   * over the body. This allows for example resources to be constructed/open lazily.
    *
    * @param r the resource to managed passed by-name
    * @tparam R the type of the Resource
