@@ -1,5 +1,7 @@
 # ARM4S - Automatic Resource Management for Scala
 
+[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=develop)](https://travis-ci.org/tmoschou/arm4s)
+
 This library provides a way of succinctly dealing with resources in an exception safe manner. The behaviour
 is identical to Java's exception handling in `try`-with-resources statement and a substitute for scala which does not
 have an equivalent construct natively.
