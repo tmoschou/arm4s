@@ -54,17 +54,15 @@ exception scenarios and with the following goals regarding exception safe behavi
 
 In SBT:
 
-    libraryDependencies += "io.tmos" %% "arm4s" % VERSION
+    libraryDependencies += "io.tmos" %% "arm4s" % "0.1.0"
 
 In Maven:
 
     <dependency>
         <groupId>io.tmos</groupId>
         <artifactId>arm4s_${scala.binary.version}</artifactId>
-        <version>VERSION</version>
+        <version>0.1.0</version>
     </dependency>
-
-Replace `VERSION` with the latest version.
 
 ## Using ARM4S
 
