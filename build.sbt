@@ -31,6 +31,6 @@ val arm = (project in file(".")).
           <name>Terry Moschou</name>
           <url>http://tmos.io/</url>
         </developer>
-      </developers>
-
+      </developers>,
+    pgpSigningKey := Some(-1091523304587826185L)
   )
