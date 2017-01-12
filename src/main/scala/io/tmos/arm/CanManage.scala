@@ -37,12 +37,8 @@ object CanManage {
    * This is the type class implementation for reflectively assuming a class with a close method is
    * a resource.
    */
-  implicit def reflectiveCloseableResource[R <: ReflectiveCloseable]: CanManage[R] = new CanManage[R] {
-    override def withFinally(handle: R) = handle.close()
-  }
+  implicit def reflectiveCloseableResource[R <: ReflectiveCloseable]: CanManage[R] = (handle: R) => handle.close()
 
-  implicit def autoCloseableResource[R <: AutoCloseable]: CanManage[R] = new CanManage[R] {
-    override def withFinally(handle: R) = handle.close()
-  }
+  implicit def autoCloseableResource[R <: AutoCloseable]: CanManage[R] = (handle: R) => handle.close()
 
 }

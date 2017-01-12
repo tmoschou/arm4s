@@ -19,3 +19,5 @@ project/plugins/project/
 # IntelliJ specific
 .idea/
 
+# Project specific
+project/local.sbt
