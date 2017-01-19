@@ -8,7 +8,7 @@ have an equivalent construct natively.
 
 Unlike Java's try-with-resource constructs, managed resources are not limited to `java.lang.AutoClosable`s.
 Further types such as `java.util.concurrent.ExecutorService` can be supported with implicit converters in user code.
-See Comprehensive Examples below. Also unlike try-with-resource constructs, ARM4S's managed block (the body) can
+See Comprehensive Example below. Also unlike try-with-resource constructs, ARM4S's managed block (the body) can
 actually yield results, ensuring that resources are closed properly before returning.
 
 For example: Parse multiple resources implicitly and yield a result
@@ -47,7 +47,7 @@ exception scenarios and with the following goals regarding exception safe behavi
    if any. Instead it should catch and recorded as a suppressed exception against the original (currently throwing)
    exception, and certainly not vice-versa. This is what Java's try with resource construct effectively does; for more
    details, see Oracle's tech article on
-   (Try-with-resources)[http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html].
+   [Try-with-resources](http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html).
 
 
 ## Including ARM4S in your project
@@ -137,7 +137,7 @@ val result try {
 For example if `new B(a)` threw an exception then `a` would not be closed. Likewise if `c.close` threw an exception, then
 `a` and `b` would not be closed. The equivalent code using multiple `try` statements gets messy very quickly.
 See Oracle's tech article on
-(Try-with-resources)[http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html] for an example.
+[Try-with-resources](http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html) for an example.
 
 ## Comprehensive Example
 

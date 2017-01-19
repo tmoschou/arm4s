@@ -40,13 +40,6 @@ class ArmSuite extends FunSuite {
     assert(resource.isClosed)
   }
 
-  test("Resources should be a when explicitly managed") {
-    val resource: SimpleAutoCloseableTest = new SimpleAutoCloseableTest("1")
-    val m = manage(resource)
-
-    println(m)
-  }
-
   test("Resources should be closed when implicitly managed") {
     import io.tmos.arm.implicits._
     val resource: SimpleAutoCloseableTest = new SimpleAutoCloseableTest("1")
