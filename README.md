@@ -35,7 +35,7 @@ This library differs from other Scala ARM libraries in that it has been designed
 exception scenarios and with the following goals regarding exception safe behaviour:
 
 1. The `withFinally` method (see
-   [`CanManage`](https://static.javadoc.io/io.tmos/arm4s_2.12/0.1.0/io/tmos/arm/CanManage.html)) of a managed resource
+   [`CanManage`](https://static.javadoc.io/io.tmos/arm4s_2.12/0.2.0/io/tmos/arm/CanManage.html)) of a managed resource
    (delegates to `close` of `AutoCloseable`s) must be called even if the body throws _any_ `Throwable` exception
    including fatal ones to ensure that no resources are leaked. Example of fatal exceptions include anything not
    matched by `scala.util.control.NonFatal` such as `InterruptedException`, `ControlThrowable` and
@@ -56,14 +56,14 @@ exception scenarios and with the following goals regarding exception safe behavi
 
 In SBT:
 ```scala
-libraryDependencies += "io.tmos" %% "arm4s" % "0.1.0"
+libraryDependencies += "io.tmos" %% "arm4s" % "0.2.0"
 ```
 In Maven:
 ```xml
 <dependency>
     <groupId>io.tmos</groupId>
     <artifactId>arm4s_${scala.binary.version}</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 ## Using ARM4S
