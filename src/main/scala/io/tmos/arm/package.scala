@@ -81,8 +81,7 @@ package io.tmos
  * `for`-comprehension, or any prior `withFinally` called on other resources.
  *
  * == Examples ==
- * Using [[https://www.scala-lang.org/files/archive/spec/2.12/06-expressions.html#for-comprehensions-and-for-loops
- * For-Comprehensions]]
+ * Using [[https://www.scala-lang.org/files/archive/spec/2.12/06-expressions.html#for-comprehensions-and-for-loops For-Comprehensions]]
  * {{{
  *     import io.tmos.arm._
  *     val lines: Seq[String] = for (inputStream <- managed(new FileInputStream("data.json")) yield {
