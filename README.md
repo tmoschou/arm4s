@@ -9,12 +9,12 @@ have an equivalent construct natively.
 
 Unlike Java's try-with-resource constructs, managed resources are not limited to `java.lang.AutoClosable`s.
 Further types such as `java.util.concurrent.ExecutorService` can be supported with implicit converters in user code.
-See Comprehensive Example below. Also unlike try-with-resource constructs, ARM4S's managed block (the body) can
-actually yield results, ensuring that resources are closed properly before returning.
+See Comprehensive Example below. Also unlike Java's constructs, ARM4S's managed block (the body) can
+yield results, ensuring that resources are closed properly before returning.
 
 For example: Parse multiple resources implicitly and yield a result
 ```scala
-import io.tmos.arm.implicits._
+import io.tmos.arm.Implicits._
 import java.io._
 import java.net.{Socket, InetAddress, ServerSocket}
 
@@ -34,20 +34,21 @@ For more examples see, the Examples section below.
 This library differs from other Scala ARM libraries in that it has been designed with consideration for different
 exception scenarios and with the following goals regarding exception safe behaviour:
 
-1. The `withFinally` method (see `CanManage`) of a managed resource (e.g. delegates to `close` of `AutoCloseable`s)
-   must be called even if the body throws _any_ `Throwable` exception including fatal ones. Example of fatal exceptions
-   include anything not matched by `scala.util.control.NonFatal` such as `InterruptedException`, `ControlThrowable`
-   and `VirtualMachineError`. Any exception must be immediately rethrown after withFinally,
-   in fact this is a requirement of fatal exceptions.
+1. The `withFinally` method (see
+   [`CanManage`](https://static.javadoc.io/io.tmos/arm4s_2.12/0.1.0/io/tmos/arm/CanManage.html)) of a managed resource
+   (delegates to `close` of `AutoCloseable`s) must be called even if the body throws _any_ `Throwable` exception
+   including fatal ones to ensure that no resources are leaked. Example of fatal exceptions include anything not
+   matched by `scala.util.control.NonFatal` such as `InterruptedException`, `ControlThrowable` and
+   `VirtualMachineError`. Though you should not try to handle such unchecked errors, finally logic should still
+   (attempted to) be executed regardless.
 
-2. The `withFinally` method in a finally clause may also throw any `Throwable` too. Unfortunately this is a possibility
-   and permitted by `AutoCloseable` which can throw any `Throwable` (Any `Exception` plus `Error` which are
-   unchecked).
+2. The `withFinally` method may also throw any `Throwable` too. Unfortunately this is a
+   possibility as permitted by `AutoCloseable`, but gives flexibility in implementing cleanup logic.
 
-3. Importantly, any `Throwable` thrown by `withFinally` must not mask (suppress) any exception thrown firstly by the body,
-   if any. Instead it should catch and recorded as a suppressed exception against the original (currently throwing)
-   exception, and certainly not vice-versa. This is what Java's try with resource construct effectively does; for more
-   details, see Oracle's tech article on
+3. Importantly, any `Throwable` thrown by `withFinally` should not mask (suppress) any exception thrown firstly by the
+   body, if any. Instead the secondary exception thrown in the finally clause should be caught and recorded as a
+   suppressed exception against the primary (currently throwing) exception. This is what Java's try with resource
+   construct does; for more details, see Oracle's tech article on
    [Try-with-resources](http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html).
 
 
@@ -77,7 +78,7 @@ for (r <- manage(resource))
 ```
 Or implicitly
 ```scala
-import io.tmos.arm.implicits._
+import io.tmos.arm.Implicits._
 for (r <- resource)
    ...
 ```
@@ -96,7 +97,7 @@ The resources are closed in a `finally` clause regardless of any exception throw
 `for`-comprehension, or any prior `withFinally` called on other resources.
 
 ## Examples
-Imperatively
+Using [For-Comprehensions](https://www.scala-lang.org/files/archive/spec/2.12/06-expressions.html#for-comprehensions-and-for-loops)
 ```scala
 import io.tmos.arm._
 val lines: Seq[String] = for (inputStream <- managed(new FileInputStream("data.json")) yield {
@@ -121,32 +122,15 @@ val result = for {
   ...
 }
 ```
-Note that this is NOT the same as
-```scala
-val a : A = new A
-val b : B = new B(a)
-val c : C = new C
-
-val result try {
-  ...
-} finally {
-  c.close
-  b.close
-  a.close
-}
-```
-For example if `new B(a)` threw an exception then `a` would not be closed. Likewise if `c.close` threw an exception, then
-`a` and `b` would not be closed. The equivalent code using multiple `try` statements gets messy very quickly.
-See Oracle's tech article on
-[Try-with-resources](http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html) for an example.
 
 ## Comprehensive Example
 
-Here is a comprehensive example of managing multiple resources implcitly
-including an `ExectorService` which we provide the custom `withFinally` logic for, that runs a tcp service in a separate
-thread which echos back text in uppercase.
+Here is a comprehensive example of managing multiple resources implicitly, including an `ExectorService` which we
+define `withFinally` logic for. This sample code runs a server socket in a separate thread echoing back text it
+receives in uppercase.
+
 ```scala
-import io.tmos.arm.implicits._
+import io.tmos.arm.Implicits._
 import scala.collection.JavaConverters._
 
 implicit val canManageExectorService = new CanManage[ExecutorService] {
@@ -182,8 +166,7 @@ val callable = new Callable[Unit] {
   }
 }
 
-// manage an executor service using the user defined canManageExectorService.
-// This will shutdown and wait termination
+// manage an executor service using the implicit CanManage[ExecutorService].
 val completedFuture = for (executorService <- Executors.newSingleThreadExecutor()) yield {
   val future = executorService.submit(callable)
   val upperPhrase = for {
@@ -211,32 +194,6 @@ If a resource implements any of
   * `def foreach(f: A => Unit): Unit`
 
 then it is _not_ recommended to use to use the implicit management of the resource, as it may not be obvious to a reader
-if the resource has become managed. For example
-```scala
-import io.tmos.arm.implicits._
+if the resource has become managed.
 
-class MappableResource extends AutoCloseable {
-  def isClosed = closed
-  protected var closed = false
-  override def close(): Unit = closed = true
-  def map[B](f: Int => B): Seq[B] = (0 to 3).map(f)
-}
-
-val resource1 = new MappableResource
-val result1 = for (i <- resource1) yield { // resource NOT managed
-  i * 2     // Note i is of type Int, not MappableResource
-}
-println(result1)                // Vector(0, 2, 4, 6)
-println(resource1.isClosed)     // false
-
-val resource2 = new MappableResource
-val result2 = for {
-  r <- resource2     // resource managed
-  i <- r
-} yield {
-  i * 2
-}
-println(result2)                // Vector(0, 2, 4, 6)
-println(resource2.isClosed)     // true
-```
 Please use the explicit `manage()` method.

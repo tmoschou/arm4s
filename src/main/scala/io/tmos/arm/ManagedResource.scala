@@ -50,7 +50,7 @@ trait ManagedResource[A]{
   def map[B](f: A => B): B = apply(f)
 
   /**
-   * Allows the resource to be used imperatively in _stacked_ `yield`-ing `for`-comprehensions.
+   * Allows the resource to be used imperatively in ''stacked'' `yield`-ing `for`-comprehensions.
    *
    * For example
    * {{{
