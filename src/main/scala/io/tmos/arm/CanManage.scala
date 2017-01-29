@@ -9,7 +9,7 @@ package io.tmos.arm
  * Other types may be provided in scope by the user. For example
  * {{{
  *   import java.util.concurrent._
- *   import io.tmos.arm.implicits._
+ *   import io.tmos.arm.Implicits._
  *
  *   implicit val canManageExectorService = new CanManage[ExecutorService] {
  *     override def withFinally(pool: ExecutorService): Unit = {

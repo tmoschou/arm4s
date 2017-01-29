@@ -7,14 +7,14 @@ package io.tmos.arm
  *
  * If a resource implements any of
  *
- *   * `def map[B](f: A => B): B`
- *   * `def flatMap[B](f: A => B): B`
- *   * `def foreach(f: A => Unit): Unit`
+ *   - `def map[B](f: A => B): B`
+ *   - `def flatMap[B](f: A => B): B`
+ *   - `def foreach(f: A => Unit): Unit`
  *
- * then it is _not_ recommended to use to use the implicit management of the resource, as it may not be obvious to a reader
+ * then it is ''not'' recommended to use to use the implicit management of the resource, as it may not be obvious to a reader
  * if the resource has become managed. For example
  * {{{
- *     import io.tmos.arm.implicits._
+ *     import io.tmos.arm.Implicits._
  *
  *     class MappableResource extends AutoCloseable {
  *       def isClosed = closed
@@ -42,15 +42,13 @@ package io.tmos.arm
  * }}}
  * Please use the explicit [[io.tmos.arm.manage]] method instead.
  */
-package object implicits {
-  import scala.language.implicitConversions
+object Implicits {
 
   /**
-   * Implicit converter of a resource to one that is managed.
+   * Implicit class to convert a resource to one that is managed.
    *
-   * @param r the the resource passed by name
-   * @tparam R the type of the resource
-   * @return an instance of the resource managed
+   * @param r the resource passed by name
+   * @tparam R
    */
-  implicit def manageImplicit[R: CanManage](r: => R): ManagedResource[R] = new DefaultManagedResource(r)
+  implicit class ImplicitDefaultManagedResource[R: CanManage](r: =>  R) extends DefaultManagedResource[R](r)
 }

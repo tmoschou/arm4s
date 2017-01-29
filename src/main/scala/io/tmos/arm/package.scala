@@ -14,7 +14,7 @@ package io.tmos
  *
  * For example: Parse multiple resources implicitly and yield a result
  * {{{
- *     import io.tmos.arm.implicits._
+ *     import io.tmos.arm.Implicits._
  *     import java.io._
  *     import java.net.{Socket, InetAddress, ServerSocket}
  *
@@ -34,21 +34,21 @@ package io.tmos
  * This library differs from other Scala ARM libraries in that it has been designed with consideration for different
  * exception scenarios and with the following goals regarding exception safe behaviour:
  *
- * 1. The `withFinally` method (see [[io.tmos.arm.CanManage.withFinally]]) of a managed resource (e.g. delegates to `close` of `AutoCloseable`s)
- *    must be called even if the body throws _any_ `Throwable` exception including fatal ones. Example of fatal exceptions
- *    include anything not matched by [[scala.util.control.NonFatal$]] such as `InterruptedException`,
- *    [[scala.util.control.ControlThrowable]] and `VirtualMachineError`. Any exception must be immediately rethrown after withFinally,
- *    in fact this is a requirement of fatal exceptions.
+ * 1. The [[io.tmos.arm.CanManage.withFinally `withFinally`]] of a managed resource
+ *    (delegates to `close` of `AutoCloseable`s) must be called even if the body throws ''any'' `Throwable` exception
+ *    including fatal ones to ensure that no resources are leaked. Example of fatal exceptions include anything not
+ *    matched by [[scala.util.control.NonFatal$]] such as `InterruptedException`, `ControlThrowable` and
+ *    `VirtualMachineError`. Though you should not try to handle such unchecked errors, finally logic should still
+ *    (attempted to) be executed regardless.
  *
- * 2. The `withFinally` method in a finally clause may also throw any `Throwable` too. Unfortunately this is a possibility
- *    and permitted by `AutoCloseable` which can throw any `Throwable` (Any `Exception` plus `Error` which are
- *    unchecked).
+ * 2. The `withFinally` method may also throw any `Throwable` too. Unfortunately this is a
+ *    possibility as permitted by `AutoCloseable`, but gives flexibility in implementing cleanup logic.
  *
- * 3. Importantly, any `Throwable` thrown by `withFinally` must not mask (suppress) any exception thrown firstly by the body,
- *    if any. Instead it should catch and recorded as a suppressed exception against the original (currently throwing)
- *    exception, and certainly not vice-versa. This is what Java's try with resource construct effectively does; for more
- *    details, see Oracle's tech article on
- *    (Try-with-resources)[http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html].
+ * 3. Importantly, any `Throwable` thrown by `withFinally` should not mask (suppress) any exception thrown firstly by the
+ *    body, if any. Instead the secondary exception thrown in the finally clause should be caught and recorded as a
+ *    suppressed exception against the primary (currently throwing) exception. This is what Java's try with resource
+ *    construct does; for more details, see Oracle's tech article on
+ *    [[http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html Try-with-resources]].
  *
  * == Using ARM4S ==
  *
@@ -62,7 +62,7 @@ package io.tmos
  * }}}
  * Or implicitly
  * {{{
- *     import io.tmos.arm.implicits._
+ *     import io.tmos.arm.Implicits._
  *     for (r <- resource)
  *        ...
  * }}}
@@ -81,7 +81,7 @@ package io.tmos
  * `for`-comprehension, or any prior `withFinally` called on other resources.
  *
  * == Examples ==
- * Imperatively
+ * Using [[https://www.scala-lang.org/files/archive/spec/2.12/06-expressions.html#for-comprehensions-and-for-loops For-Comprehensions]]
  * {{{
  *     import io.tmos.arm._
  *     val lines: Seq[String] = for (inputStream <- managed(new FileInputStream("data.json")) yield {
@@ -106,32 +106,14 @@ package io.tmos
  *       ...
  *     }
  * }}}
- * Note that this is NOT the same as
- * {{{
- *     val a : A = new A
- *     val b : B = new B(a)
- *     val c : C = new C
- *
- *     val result try {
- *       ...
- *     } finally {
- *       c.close
- *       b.close
- *       a.close
- *     }
- * }}}
- * For example if `new B(a)` threw an exception then `a` would not be closed. Likewise if `c.close` threw an exception, then
- * `a` and `b` would not be closed. The equivalent code using multiple `try` statements gets messy very quickly.
- * See Oracle's tech article on
- * (Try-with-resources)[http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html] for an example.
- *
+
  * == Comprehensive Example ==
  *
- * Here is a comprehensive example of managing multiple resources implcitly
- * including an `ExectorService` which we provide the custom `withFinally` logic for, that runs a tcp service in a separate
- * thread which echos back text in uppercase.
+ * Here is a comprehensive example of managing multiple resources implicitly, including an `ExectorService` which we
+ * define `withFinally` logic for. This sample code runs a server socket in a separate thread echoing back text it
+ * receives in uppercase.
  * {{{
- *     import io.tmos.arm.implicits._
+ *     import io.tmos.arm.Implicits._
  *     import scala.collection.JavaConverters._
  *
  *     implicit val canManageExectorService = new CanManage[ExecutorService] {
@@ -191,7 +173,7 @@ package io.tmos
 package object arm {
 
   /**
-   * Explicitly manages a resource. For implicit management see `io.tmos.arm.implicits`
+   * Explicitly manages a resource. For implicit management see `io.tmos.arm.Implicits`
    *
    * Note that the resource is passed by-name and as it not evaluated until the construct is applied
    * over the body. This allows for example resources to be constructed/open lazily.
@@ -202,5 +184,6 @@ package object arm {
    * @return a managed resource
    */
   def manage[R: CanManage](r: => R): ManagedResource[R] = new DefaultManagedResource(r)
+
 
 }

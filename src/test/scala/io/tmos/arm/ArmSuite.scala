@@ -1,7 +1,7 @@
 package io.tmos.arm
 
 import java.io._
-import java.net.{Socket, InetAddress, ServerSocket}
+import java.net.{InetAddress, ServerSocket, Socket}
 import java.util.concurrent._
 
 import org.scalatest.FunSuite
@@ -40,15 +40,8 @@ class ArmSuite extends FunSuite {
     assert(resource.isClosed)
   }
 
-  test("Resources should be a when explicitly managed") {
-    val resource: SimpleAutoCloseableTest = new SimpleAutoCloseableTest("1")
-    val m = manage(resource)
-
-    println(m)
-  }
-
   test("Resources should be closed when implicitly managed") {
-    import io.tmos.arm.implicits._
+    import io.tmos.arm.Implicits._
     val resource: SimpleAutoCloseableTest = new SimpleAutoCloseableTest("1")
     for (r <- resource) {
       assert(!r.isClosed)
@@ -175,7 +168,8 @@ class ArmSuite extends FunSuite {
 
   test("Composing resources and lookup of user defined CanManage should work") {
 
-    import io.tmos.arm.implicits._
+    import io.tmos.arm.Implicits._
+
     import scala.collection.JavaConverters._
 
     val port = new CompletableFuture[Int]
