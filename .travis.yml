@@ -12,3 +12,5 @@ branches:
     - develop
     - /^release\/.*$/
     - /^feature\/.*$/
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION test doc
