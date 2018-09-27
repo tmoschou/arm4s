@@ -1,89 +1,102 @@
 package io.tmos.arm
 
 /**
- * For encapsulating the `finally` logic of a resource.
- *
- * Logic for any `java.lang.AutoClosable`, else any object which has structural type
- * `type T = { def close() }` is provided by the companion object implicitly.
- *
- * Other types may be provided in scope by the user. For example
- * {{{
- *   import java.util.concurrent._
- *   import io.tmos.arm.Implicits._
- *
- *   implicit val canManageExectorService = new CanManage[ExecutorService] {
- *     override def withFinally(pool: ExecutorService): Unit = {
- *       pool.shutdown() // Disable new tasks from being submitted
- *       try {
- *         if (!pool.awaitTermination(10, TimeUnit.SECONDS)) { // wait for normal termination
- *           pool.shutdownNow() // force terminate
- *           if (!pool.awaitTermination(10, TimeUnit.SECONDS)) // wait for forced termination
- *             throw new RuntimeException("ExecutorService did not terminate")
- *         }
- *       } catch {
- *         case e: InterruptedException =>
- *           pool.shutdownNow()  // (Re-)Cancel if current thread also interrupted
- *           Thread.currentThread().interrupt()  // Preserve interrupt status
- *       }
- *     }
- *   }
- *
- *   for (executorService <- Executors.newSingleThreadExecutor) { ... }
- * }}}
- *
- * @tparam R the underlying type of the resource passed to the managed body
- */
-trait CanManage[R] {
+  * For encapsulating the management logic of a resource.
+  *
+  * Default logic for any `java.lang.AutoClosable` is provided by the companion object,
+  * which may be imported into current scope as implicits.
+  *
+  * Other types may be provided in scope by the user. For example
+  * {{{
+  *   import java.util.concurrent._
+  *   import io.tmos.arm.Implicits._
+  *
+  *   implicit val manager: CanManage[ExecutorService] = new CanManage[ExecutorService] {
+  *     override def onFinally(pool: ExecutorService): Unit = {
+  *       pool.shutdown() // Disable new tasks from being submitted
+  *       try {
+  *         if (!pool.awaitTermination(10, TimeUnit.SECONDS)) { // wait for normal termination
+  *           pool.shutdownNow() // force terminate
+  *           if (!pool.awaitTermination(10, TimeUnit.SECONDS)) // wait for forced termination
+  *             throw new RuntimeException("ExecutorService did not terminate")
+  *         }
+  *       } catch {
+  *         case _: InterruptedException =>
+  *           pool.shutdownNow() // (Re-)Cancel if current thread also interrupted
+  *           Thread.currentThread().interrupt() // Preserve interrupt status
+  *       }
+  *     }
+  *     override def onException(r: ExecutorService): Unit = {}
+  *   }
+  *
+  *   for (manage(executorService) <- Executors.newSingleThreadExecutor.manage) { ... }
+  * }}}
+  *
+  * @tparam R the type of the resource to manage
+  */
+trait CanManage[-R] {
 
   /**
-   * Releases the resource.
-   *
-   * IMPORTANT: From Java's `java.lang.AutoCloseable` but also applicable to any implementation of this trait:
-   *
-   * "Implementers of this interface are also strongly advised to not have the
-   * method throw `java.lang.InterruptedException`. This exception interacts with a thread's
-   * interrupted status, and runtime misbehavior is likely to occur if an `java.lang.InterruptedException`
-   * is suppressed. More generally, if it would cause problems for an exception to be suppressed,
-   * the AutoCloseable.close method should not throw it."
-   */
-  def withFinally(r: R): Unit
+    * Execution hook called after the managed block.
+    *
+    * This execution hook is called regardless if an exception is thrown.
+    *
+    * Usually resources are released or closed in the lifecycle.
+    *
+    * Implementors are free to permit exceptions thrown from this method, however
+    * it is strongly advised to not have the
+    * method throw `java.lang.InterruptedException`. This exception interacts with a thread's
+    * interrupted status, and runtime misbehavior is likely to occur if an `java.lang.InterruptedException`
+    * is suppressed. More generally, if it would cause problems for an exception to be suppressed,
+    * the AutoCloseable.close method should not throw it."
+    *
+    * @param r the resource being managed
+    */
+  def onFinally(r: R): Unit
+
+  /**
+    * Execution hook called when an exception is thrown from the managed
+    * block. This is executed prior to [onFinally].
+    *
+    * Implementors are free to permit exceptions thrown from this method, however
+    * note that any new exceptions thrown will be added as
+    * a suppressed exception of the currently throwing exception.
+    * Thus it is strongly advised that implementors do not throw any exceptions
+    * if it would cause problems for an exception  to be suppressed.
+    *
+    * @param r the resource being managed
+    */
+  def onException(r: R): Unit
 }
 
+
 /**
- * Companion object to the Resource type trait.
+ * Companion object to the CanManage type trait.
  *
- * Contains implicit implementations of CanManage
+ * Contains common implementations of CanManage for AutoClosable Resources
  */
 object CanManage {
-  import scala.language.reflectiveCalls
 
   /**
-   * The structural type of objects to manage
-   */
-  type ReflectiveCloseable = {
-    def close()
+    * Always call close on a AutoClosable after applied block,
+    * regardless if block throws an exception or not. This is identical to
+    * Java's try-with-resources.
+    */
+  implicit object CloseOnFinally extends CanManage[AutoCloseable] {
+    override def onFinally(r: AutoCloseable): Unit = if (r != null) r.close()
+    override def onException(r: AutoCloseable): Unit = {}
   }
 
   /**
-   * Implicit value for managing any object who's structural type implements the `def close()` method.
-   *
-   * @tparam R type of the resource that is reflectively a subtype of `ReflectiveCloseable`
-   * @return a CanManage who's finally logic is to call `close`
-   */
-  implicit def reflectiveCloseableResource[R <: ReflectiveCloseable]: CanManage[R] = new CanManage[R] {
-    // TODO: Figure out how to conditionally cross compile this as a SAM when Scala 2.12
-    override def withFinally(r: R): Unit = r.close()
-  }
-
-  /**
-   * Implicit value for managing any object that is a `java.lang.AutoClosable`
-   *
-   * @tparam R type of the resource that a subtype of `AutoClosable`
-   * @return a CanManage who's finally logic is to call `close`
-   */
-  implicit def autoCloseableResource[R <: AutoCloseable]: CanManage[R] = new CanManage[R] {
-    // TODO: Figure out how to conditionally cross compile this as a SAM when Scala 2.12
-    override def withFinally(r: R): Unit = r.close()
+    * Call close on a resource only if a exception is thrown in the applied block.
+    * This is useful for instance if closing a resource needs to be delegated
+    * elsewhere under normal circumstances, but abnormal circumstances should be
+    * handled in the current scope. Such examples may include managing a resource
+    * across threads.
+    */
+  object CloseOnException extends CanManage[AutoCloseable] {
+    override def onFinally(r: AutoCloseable): Unit = {}
+    override def onException(r: AutoCloseable): Unit = if (r != null) r.close()
   }
 
 }
