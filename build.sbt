@@ -22,17 +22,19 @@ val arm = (project in file(".")).
         Some("releases"  at nexus + "service/local/staging/deploy/maven2")
     },
     pomIncludeRepository := { _ => false },
-    pomExtra :=
-      <scm>
-        <url>git@github.com:tmoschou/arm4s.git</url>
-        <connection>scm:git:git@github.com:tmoschou/arm4s.git</connection>
-      </scm>
-      <developers>
-        <developer>
-          <id>tmoschou</id>
-          <name>Terry Moschou</name>
-          <url>http://tmos.io/</url>
-        </developer>
-      </developers>
-    //useGpg := true
+    scmInfo := Some(
+      ScmInfo(
+        homepage.value.get,
+        "scm:git:git@github.com:tmoschou/arm4s.git"
+      )
+    ),
+    developers := List(
+      Developer(
+        "tmoschou",
+        "Terry Moschou",
+        "tmoschou@gmail.com",
+        url("https://github.com/tmoschou/")
+      )
+    ),
+    useGpg := true
   )
