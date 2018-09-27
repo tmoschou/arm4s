@@ -3,9 +3,9 @@ sudo: false
 jdk:
   - oraclejdk8
 scala:
-   - 2.10.6
-   - 2.11.8
-   - 2.12.1
+   - 2.10.7
+   - 2.11.12
+   - 2.12.6
 branches:
   only:
     - master
