@@ -1,54 +1,57 @@
 package io.tmos.arm
 
 /**
- * Allows for implicit management of resources.
- *
- * == Caveats ==
- *
- * If a resource implements any of
- *
- *   - `def map[B](f: A => B): B`
- *   - `def flatMap[B](f: A => B): B`
- *   - `def foreach(f: A => Unit): Unit`
- *
- * then it is ''not'' recommended to use to use the implicit management of the resource, as it may not be obvious to a reader
- * if the resource has become managed. For example
- * {{{
- *     import io.tmos.arm.Implicits._
- *
- *     class MappableResource extends AutoCloseable {
- *       def isClosed = closed
- *       protected var closed = false
- *       override def close(): Unit = closed = true
- *       def map[B](f: Int => B): Seq[B] = (0 to 3).map(f)
- *     }
- *
- *     val resource1 = new MappableResource
- *     val result1 = for (i <- resource1) yield { // resource NOT managed
- *       i * 2     // Note i is of type Int, not MappableResource
- *     }
- *     println(result1)                // Vector(0, 2, 4, 6)
- *     println(resource1.isClosed)     // false
- *
- *     val resource2 = new MappableResource
- *     val result2 = for {
- *       r <- resource2     // resource managed
- *       i <- r
- *     } yield {
- *       i * 2
- *     }
- *     println(result2)                // Vector(0, 2, 4, 6)
- *     println(resource2.isClosed)     // true
- * }}}
- * Please use the explicit [[io.tmos.arm.manage]] method instead.
- */
+  * Implicit Methods for management of a resource.
+  *
+  * For explicit management see `io.tmos.arm.ArmMethods`.
+  */
 object Implicits {
 
   /**
-   * Implicit class to convert a resource to one that is managed.
-   *
-   * @param r the resource passed by name
-   * @tparam R
-   */
-  implicit class ImplicitDefaultManagedResource[R: CanManage](r: =>  R) extends DefaultManagedResource[R](r)
+    * Provide implicit methods to manage a generic resource.
+    *
+    * Also requires an implicit `CanManage[S]` in scope. A default manager for
+    * `AutoClosable`s is provided (See `CanManage.CloseOnFinally`) and the
+    * default behaviour is equivalently the same as `closeOnFinally`
+    *
+    * @param r the resource to managed passed by-name
+    * @tparam R the type of the resource passed to the applied expression
+    * @tparam S the type of the resource passed to the manager
+    */
+  implicit class ImplicitManageable[R, -S >: R : CanManage](r: =>  R) {
+
+    /**
+      * Converts this resource into a generic managed resource.
+      * @return the managed resource
+      */
+    def manage: ManagedResource[R] = ArmMethods.manage(r)
+  }
+
+  /**
+    * Provide implicit methods to manage an AutoClosable resource.
+    *
+    * @param r the resource to managed passed by-name
+    * @tparam R the type of the resource passed to the applied expression
+    */
+  implicit class ImplicitAutoClosable[R <: AutoCloseable](r: => R) {
+
+    /**
+      * Convert this AutoClosable into a managed resource. Will call
+      * `AutoClosable.close` during the on-finally execution lifecycle.
+      * The on-exception lifecycle hook is a no-op.
+      *
+      * @return the managed resource
+      */
+    def closeOnFinally: ManagedResource[R] = ArmMethods.closeOnFinally(r)
+
+    /**
+      * Convert this AutoClosable into a managed resource. Will call
+      * `AutoClosable.close` during the on-exception execution lifecycle.
+      * The on-finally lifecycle hook is a no-op.
+      *
+      * @return the managed resource
+      */
+    def closeOnException: ManagedResource[R] = ArmMethods.closeOnException(r)
+  }
+
 }

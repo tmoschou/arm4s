@@ -4,31 +4,11 @@ package io.tmos.arm
  * A resource that is managed.
  *
  * Only one implementation is provided currently [[DefaultManagedResource]]. Subclasses only need to provide
- * [[ManagedResource.apply]]
+ * [[ManagedResource.map]]
  *
  * @tparam A the type of the resource to manage
  */
-trait ManagedResource[A]{
-
-  /**
-   * Allows the resource to be used as monadically.
-   *
-   * For example
-   * {{{
-   *   import io.tmos.arm._
-   *   managed(new Resource) { r =>
-   *     ...
-   *   }
-   * }}}
-   *
-   * Concrete implementors of this trait must ensure that resource is closed after execution of the supplied
-   * function.
-   *
-   * @param f the function to execute of which the resource is managed
-   * @tparam B the return type of the function
-   * @return the result of the function
-   */
-  def apply[B](f: A => B): B
+trait ManagedResource[+A]{
 
   /**
    * Allows the resource to be used imperatively in `yield`-ing `for`-comprehensions.
@@ -41,13 +21,11 @@ trait ManagedResource[A]{
    *   }
    * }}}
    *
-   * Default implementation is to call [[apply]]
-   *
    * @param f the function to execute of which the resource is managed
    * @tparam B the return type of the function
    * @return the result of the function
    */
-  def map[B](f: A => B): B = apply(f)
+  def map[B](f: A => B): B
 
   /**
    * Allows the resource to be used imperatively in ''stacked'' `yield`-ing `for`-comprehensions.
@@ -71,13 +49,13 @@ trait ManagedResource[A]{
    *   }
    * }}}
    *
-   * Default implementation is to call [[apply]]
+   * Default implementation is to call [[map]]
    *
    * @param f the function to execute of which the resource is managed
    * @tparam B the return type of the function
    * @return the result of the function
    */
-  def flatMap[B](f: A => B): B  = apply(f)
+  def flatMap[B](f: A => B): B  = map(f)
 
   /**
    * Allows the resource to be used imperatively in `for`-comprehensions.
@@ -90,11 +68,11 @@ trait ManagedResource[A]{
    *   }
    * }}}
    *
-   * Default implementation is to call [[apply]]
+   * Default implementation is to call [[map]]
    *
    * @param f the function to execute of which the resource is managed
    */
-  def foreach(f: A => Unit): Unit  = apply(f)
+  def foreach(f: A => Unit): Unit  = map(f)
 }
 
 
