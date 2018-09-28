@@ -35,6 +35,5 @@ val arm = (project in file(".")).
         "tmoschou@gmail.com",
         url("https://github.com/tmoschou/")
       )
-    ),
-    useGpg := true
+    )
   )
