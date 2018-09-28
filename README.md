@@ -1,7 +1,11 @@
 # ARM4S - Automatic Resource Management for Scala
 
-[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=develop)](https://travis-ci.org/tmoschou/arm4s)
-[![Javadocs](https://www.javadoc.io/badge/io.tmos/arm4s_2.12.svg?label=Scaladoc)](https://www.javadoc.io/doc/io.tmos/arm4s_2.12)
+ |Branch|Status|
+ |:-----|:----:|
+ |*master*|[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=master)](https://travis-ci.org/tmoschou/arm4s)|
+ |*develop*|[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=develop)](https://travis-ci.org/tmoschou/arm4s)|
+
+[![Scaladocs](https://www.javadoc.io/badge/io.tmos/arm4s_2.12.svg?label=Scaladoc)](https://www.javadoc.io/doc/io.tmos/arm4s_2.12)
 
 This library provides a way of succinctly dealing with resources in an exception
 safe manner. This library can provided identical exception handling and
@@ -124,14 +128,14 @@ exception scenarios and with the following goals regarding exception safe behavi
 
 In SBT:
 ```scala
-libraryDependencies += "io.tmos" %% "arm4s" % "1.0.0-SNAPSHOT"
+libraryDependencies += "io.tmos" %% "arm4s" % "1.0.0"
 ```
 In Maven:
 ```xml
 <dependency>
     <groupId>io.tmos</groupId>
     <artifactId>arm4s_${scala.binary.version}</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 ## Using ARM4S
