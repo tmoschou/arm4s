@@ -185,20 +185,22 @@ Using
 [For-Comprehensions](https://www.scala-lang.org/files/archive/spec/2.12/06-expressions.html#for-comprehensions-and-for-loops)
 ```scala
 import io.tmos.arm.ArmMethods._
-val lines: Seq[String] = for {
+val jsonMap: Map[String, Any] = for {
   inputStream <- manage(new FileInputStream("data.json"))
 } yield {
-  JsonMethods.parse(inputStream).extract[Seq[String]]
+  JsonMethods.parse(inputStream).extract[Map[String, Any]]
 }
 ```
-which translates the the following monadic style
+
+We could also write in the following monadic style
 ```scala
-import io.tmos.arm.ArmMethods._
-val lines = manage(new FileInputStream("data.json")) map { inputStream =>
-   JsonMethods.parse(inputStream).extract[Seq[String]]
-}
+import io.tmos.arm.Implicits._
+val jsonMap: Map[String, Any] = new FileInputStream("data.json")
+ .manage
+ .map(JsonMethods.parse(_))
+ .extract[Map[String, Any]]
 ```
-or if composing multiple resources this can be done easily too
+Or if composing multiple resources this can be done easily too
 ```scala
 import io.tmos.arm.ArmMethods._
 val result = for {
