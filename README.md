@@ -192,7 +192,7 @@ val jsonMap: Map[String, Any] = for {
 }
 ```
 
-We could also write in the following monadic style
+We could also write in the following fluid style
 ```scala
 import io.tmos.arm.Implicits._
 val jsonMap: Map[String, Any] = new FileInputStream("data.json")
