@@ -52,7 +52,7 @@ trait CanManage[-R] {
     *
     * @param r the resource being managed
     */
-  def onFinally(r: R): Unit
+  def onFinally(r: R): Unit = {}
 
   /**
     * Execution hook called when an exception is thrown from the managed
@@ -66,7 +66,7 @@ trait CanManage[-R] {
     *
     * @param r the resource being managed
     */
-  def onException(r: R): Unit
+  def onException(r: R): Unit = {}
 }
 
 
@@ -84,7 +84,6 @@ object CanManage {
     */
   implicit object CloseOnFinally extends CanManage[AutoCloseable] {
     override def onFinally(r: AutoCloseable): Unit = if (r != null) r.close()
-    override def onException(r: AutoCloseable): Unit = {}
   }
 
   /**
@@ -95,7 +94,6 @@ object CanManage {
     * across threads.
     */
   object CloseOnException extends CanManage[AutoCloseable] {
-    override def onFinally(r: AutoCloseable): Unit = {}
     override def onException(r: AutoCloseable): Unit = if (r != null) r.close()
   }
 
