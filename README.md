@@ -1,7 +1,11 @@
 # ARM4S - Automatic Resource Management for Scala
 
-[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=develop)](https://travis-ci.org/tmoschou/arm4s)
-[![Javadocs](https://www.javadoc.io/badge/io.tmos/arm4s_2.12.svg?label=Scaladoc)](https://www.javadoc.io/doc/io.tmos/arm4s_2.12)
+ |Branch|Status|
+ |:-----|:----:|
+ |*master*|[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=master)](https://travis-ci.org/tmoschou/arm4s)|
+ |*develop*|[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=develop)](https://travis-ci.org/tmoschou/arm4s)|
+
+[![Scaladocs](https://www.javadoc.io/badge/io.tmos/arm4s_2.12.svg?label=Scaladoc)](https://www.javadoc.io/doc/io.tmos/arm4s_2.12)
 
 This library provides a way of succinctly dealing with resources in an exception
 safe manner. This library can provided identical exception handling and
@@ -124,14 +128,14 @@ exception scenarios and with the following goals regarding exception safe behavi
 
 In SBT:
 ```scala
-libraryDependencies += "io.tmos" %% "arm4s" % "1.0.0-SNAPSHOT"
+libraryDependencies += "io.tmos" %% "arm4s" % "1.0.0"
 ```
 In Maven:
 ```xml
 <dependency>
     <groupId>io.tmos</groupId>
     <artifactId>arm4s_${scala.binary.version}</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 ## Using ARM4S
@@ -181,20 +185,22 @@ Using
 [For-Comprehensions](https://www.scala-lang.org/files/archive/spec/2.12/06-expressions.html#for-comprehensions-and-for-loops)
 ```scala
 import io.tmos.arm.ArmMethods._
-val lines: Seq[String] = for {
+val jsonMap: Map[String, Any] = for {
   inputStream <- manage(new FileInputStream("data.json"))
 } yield {
-  JsonMethods.parse(inputStream).extract[Seq[String]]
+  JsonMethods.parse(inputStream).extract[Map[String, Any]]
 }
 ```
-which translates the the following monadic style
+
+We could also write in the following fluid style
 ```scala
-import io.tmos.arm.ArmMethods._
-val lines = manage(new FileInputStream("data.json")) map { inputStream =>
-   JsonMethods.parse(inputStream).extract[Seq[String]]
-}
+import io.tmos.arm.Implicits._
+val jsonMap: Map[String, Any] = new FileInputStream("data.json")
+ .manage
+ .map(JsonMethods.parse(_))
+ .extract[Map[String, Any]]
 ```
-or if composing multiple resources this can be done easily too
+Or if composing multiple resources this can be done easily too
 ```scala
 import io.tmos.arm.ArmMethods._
 val result = for {

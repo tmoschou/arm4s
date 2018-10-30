@@ -8,7 +8,7 @@ object Build {
       case Some((2, v)) if v <= 12 =>
         Seq("org.scalatest" %% "scalatest" % "3.0.5" % "test")
       case _ =>
-        Nil
+        Seq("org.scalatest" %% "scalatest" % "3.0.6-SNAP3" % "test")
     }
   }
 

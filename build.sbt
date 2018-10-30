@@ -4,8 +4,9 @@ val arm = (project in file(".")).
   settings(
     organization := "io.tmos",
     name := "arm4s",
-    scalaVersion := "2.12.6",
-    crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.6" /*, "2.13.0-M5" */),
+    scalaVersion := "2.12.7",
+    // remember to update travis CI
+    crossScalaVersions := Seq("2.10.7", "2.11.12", "2.12.7", "2.13.0-M5" ),
     scalacOptions ++= Seq("-deprecation", "-feature", "-Xfatal-warnings"),
     Compile / doc / scalacOptions ++= Seq("-groups", "-implicits"),
     autoAPIMappings := true,
@@ -35,6 +36,5 @@ val arm = (project in file(".")).
         "tmoschou@gmail.com",
         url("https://github.com/tmoschou/")
       )
-    ),
-    useGpg := true
+    )
   )

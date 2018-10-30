@@ -16,15 +16,16 @@ object Implicits {
     *
     * @param r the resource to managed passed by-name
     * @tparam R the type of the resource passed to the applied expression
-    * @tparam S the type of the resource passed to the manager
     */
-  implicit class ImplicitManageable[R, -S >: R : CanManage](r: =>  R) {
+  implicit class ImplicitManageable[R](r: =>  R) {
 
     /**
       * Converts this resource into a generic managed resource.
+      *
+      * @tparam S the type of the resource passed to the manager
       * @return the managed resource
       */
-    def manage: ManagedResource[R] = ArmMethods.manage(r)
+    def manage[S >: R](implicit canManage: CanManage[S]): ManagedResource[R] = ArmMethods.manage(r)
   }
 
   /**
