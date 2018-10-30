@@ -128,14 +128,14 @@ exception scenarios and with the following goals regarding exception safe behavi
 
 In SBT:
 ```scala
-libraryDependencies += "io.tmos" %% "arm4s" % "1.0.0"
+libraryDependencies += "io.tmos" %% "arm4s" % "1.1.0"
 ```
 In Maven:
 ```xml
 <dependency>
     <groupId>io.tmos</groupId>
     <artifactId>arm4s_${scala.binary.version}</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 ## Using ARM4S
