@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.0-SNAPSHOT](https://github.com/tmoschou/arm4s/tree/develop) (Unreleased)
+## [1.1.0](https://github.com/tmoschou/arm4s/releases/tag/v1.1.0) (2018-10-30)
 - Added cross build for Scala 2.13-M5
 - Support explicitly passing the CanManage object to `ImplicitManageable`'s methods [#5](https://github.com/tmoschou/arm4s/issues/5)
 - `CanManage`'s `onFinally` and`onException` now defaults to no-op implementation [#6](https://github.com/tmoschou/arm4s/issues/6) 
