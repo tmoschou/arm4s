@@ -59,13 +59,17 @@ For instance, if you are doing any of the following, then you should consider th
 // don't do this
 val r = new Resource(...)
 try {
-  ... // assume we throw an exception here
+  doStuff1(r) // assume we throw an exception here
+  doStuff2(r)
 } finally {
   r.close() // what if we throw an exception here too?
 }
 ```
 
-Not good - we just masked (lost) the first 'important' exception!
+Not good - we just masked (lost) the first 'important' exception with no
+indication as to whether our main try block completed normally, or if it
+did not, then whereabouts it did fail!
+
 You may be tempted to wrap the close in another try/catch and log it
 so that the first exception isn't ever dropped.
 
@@ -83,9 +87,9 @@ try {
 }
 ```
 
-Still Bad - If `close()` throws an exception, the application has no idea one was thrown and
+Still Bad - If `close()` throws an exception, the application has no idea one was thrown on close and
 with no opportunity to fail fast and safely. Especially so, if the main try clause didn't
-throw any exception, in which case _no_ exception is propagated.
+throw any exception at all, in which case _no_ exception is propagated.
 
 Instead we should utilise `Throwable.addSuppressed` to propagate the 'first' important exception
  with any subsequent exceptions attached as 'suppressed'.
