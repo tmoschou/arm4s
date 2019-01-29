@@ -68,7 +68,7 @@ try {
 
 Not good - we just masked (lost) the first 'important' exception with no
 indication as to whether our main try block completed normally, or if it
-did not, then whereabouts it did fail!
+did not, then whereabouts it did fail.
 
 You may be tempted to wrap the close in another try/catch and log it
 so that the first exception isn't ever dropped.
@@ -94,9 +94,9 @@ throw any exception at all, in which case _no_ exception is propagated.
 Instead we should utilise `Throwable.addSuppressed` to propagate the 'first' important exception
  with any subsequent exceptions attached as 'suppressed'.
 
-Now, that was for one resource! - What if you needed to close multiple resources
+Now, that was for one resource. - What if you needed to close multiple resources
  in a finally block, each of which could independently throw an exception on close.
-Could you get it right? If you do - well done!
+Could you get it right? If you do - well done.
 But the next developer who reads is unlikely to understand it.
 
 This is where this library comes in and does things *correctly* and *succinctly*,
