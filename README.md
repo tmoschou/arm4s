@@ -42,7 +42,7 @@ val line = for {
 
 For more examples see, the Examples section below.
 
-# Rational
+# Rationale
 
 Manual management of resources have proven to be error prone, and when done
 "correctly" - ugly.
