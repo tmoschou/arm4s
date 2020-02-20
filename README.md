@@ -2,8 +2,8 @@
 
  |Branch|Status|
  |:-----|:----:|
- |*master*|[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=master)](https://travis-ci.org/tmoschou/arm4s)|
- |*develop*|[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=develop)](https://travis-ci.org/tmoschou/arm4s)|
+ |*master*|[![Build Status](https://travis-ci.com/tmoschou/arm4s.svg?branch=master)](https://travis-ci.com/tmoschou/arm4s)|
+ |*develop*|[![Build Status](https://travis-ci.com/tmoschou/arm4s.svg?branch=develop)](https://travis-ci.com/tmoschou/arm4s)|
 
 [![Scaladocs](https://www.javadoc.io/badge/io.tmos/arm4s_2.12.svg?label=Scaladoc)](https://www.javadoc.io/doc/io.tmos/arm4s_2.12)
 
