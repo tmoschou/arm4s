@@ -18,4 +18,6 @@ script:
   - sbt ++$TRAVIS_SCALA_VERSION test doc
 cache:
   directories:
-    - $HOME/.ivy2
+    - $HOME/.cache/coursier
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt
