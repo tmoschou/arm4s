@@ -1,5 +1,3 @@
-import Build._
-
 val arm = (project in file(".")).
   settings(
     organization := "io.tmos",
