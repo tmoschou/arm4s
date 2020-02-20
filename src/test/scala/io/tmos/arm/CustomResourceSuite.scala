@@ -4,9 +4,9 @@ import java.io.{BufferedReader, InputStreamReader, PrintWriter}
 import java.net.{InetAddress, ServerSocket, Socket, SocketException}
 import java.util.concurrent.{Callable, CompletableFuture, ExecutorService, Executors, TimeUnit}
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class CustomResourceSuite extends FunSuite {
+class CustomResourceSuite extends AnyFunSuite {
 
   import Implicits._
 
@@ -35,7 +35,7 @@ class CustomResourceSuite extends FunSuite {
 
   test("complex example of custom manager for Executor service and delegated resource management") {
 
-    import scala.collection.JavaConverters._
+    import Compat.CollectionConverters._
 
     val serverSocketFuture = new CompletableFuture[ServerSocket]
 

@@ -2,8 +2,8 @@
 
  |Branch|Status|
  |:-----|:----:|
- |*master*|[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=master)](https://travis-ci.org/tmoschou/arm4s)|
- |*develop*|[![Build Status](https://travis-ci.org/tmoschou/arm4s.svg?branch=develop)](https://travis-ci.org/tmoschou/arm4s)|
+ |*master*|[![Build Status](https://travis-ci.com/tmoschou/arm4s.svg?branch=master)](https://travis-ci.com/tmoschou/arm4s)|
+ |*develop*|[![Build Status](https://travis-ci.com/tmoschou/arm4s.svg?branch=develop)](https://travis-ci.com/tmoschou/arm4s)|
 
 [![Scaladocs](https://www.javadoc.io/badge/io.tmos/arm4s_2.12.svg?label=Scaladoc)](https://www.javadoc.io/doc/io.tmos/arm4s_2.12)
 
@@ -42,7 +42,7 @@ val line = for {
 
 For more examples see, the Examples section below.
 
-# Rational
+# Rationale
 
 Manual management of resources have proven to be error prone, and when done
 "correctly" - ugly.
@@ -59,13 +59,17 @@ For instance, if you are doing any of the following, then you should consider th
 // don't do this
 val r = new Resource(...)
 try {
-  ... // assume we throw an exception here
+  doStuff1(r) // assume we throw an exception here
+  doStuff2(r)
 } finally {
   r.close() // what if we throw an exception here too?
 }
 ```
 
-Not good - we just masked (lost) the first 'important' exception!
+Not good - we just masked (lost) the first 'important' exception with no
+indication as to whether our main try block completed normally, or if it
+did not, then whereabouts it did fail.
+
 You may be tempted to wrap the close in another try/catch and log it
 so that the first exception isn't ever dropped.
 
@@ -83,16 +87,16 @@ try {
 }
 ```
 
-Still Bad - If `close()` throws an exception, the application has no idea one was thrown and
+Still Bad - If `close()` throws an exception, the application has no idea one was thrown on close and
 with no opportunity to fail fast and safely. Especially so, if the main try clause didn't
-throw any exception, in which case _no_ exception is propagated.
+throw any exception at all, in which case _no_ exception is propagated.
 
 Instead we should utilise `Throwable.addSuppressed` to propagate the 'first' important exception
  with any subsequent exceptions attached as 'suppressed'.
 
-Now, that was for one resource! - What if you needed to close multiple resources
+Now, that was for one resource. - What if you needed to close multiple resources
  in a finally block, each of which could independently throw an exception on close.
-Could you get it right? If you do - well done!
+Could you get it right? If you do - well done.
 But the next developer who reads is unlikely to understand it.
 
 This is where this library comes in and does things *correctly* and *succinctly*,
@@ -128,14 +132,14 @@ exception scenarios and with the following goals regarding exception safe behavi
 
 In SBT:
 ```scala
-libraryDependencies += "io.tmos" %% "arm4s" % "1.0.0"
+libraryDependencies += "io.tmos" %% "arm4s" % "1.1.0"
 ```
 In Maven:
 ```xml
 <dependency>
     <groupId>io.tmos</groupId>
     <artifactId>arm4s_${scala.binary.version}</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 ## Using ARM4S
