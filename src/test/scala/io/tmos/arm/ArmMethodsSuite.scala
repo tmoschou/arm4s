@@ -3,11 +3,11 @@ package io.tmos.arm
 import java.io.Closeable
 
 import io.tmos.arm.ArmMethods._
-import org.scalatest.WordSpec
 
 import scala.collection.mutable
+import org.scalatest.wordspec.AnyWordSpec
 
-class ArmMethodsSuite extends WordSpec {
+class ArmMethodsSuite extends AnyWordSpec {
 
   "AutoClosable resources" when {
 

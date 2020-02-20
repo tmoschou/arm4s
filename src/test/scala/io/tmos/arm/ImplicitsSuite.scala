@@ -1,8 +1,8 @@
 package io.tmos.arm
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class ImplicitsSuite extends FunSuite {
+class ImplicitsSuite extends AnyFunSuite {
 
   test("has implicit manage converter") {
     import Implicits._
