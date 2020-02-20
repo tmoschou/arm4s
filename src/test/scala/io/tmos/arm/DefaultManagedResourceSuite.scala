@@ -1,8 +1,8 @@
 package io.tmos.arm
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class DefaultManagedResourceSuite extends FunSuite {
+class DefaultManagedResourceSuite extends AnyFunSuite {
 
   case object SimpleResource
 
@@ -21,7 +21,7 @@ class DefaultManagedResourceSuite extends FunSuite {
   test("under normal operation, only onFinally should be called") {
     implicit val manager: Manager[SimpleResource.type] = new Manager[SimpleResource.type]
     val managedResource = new DefaultManagedResource(SimpleResource)
-    managedResource.map(_ => Unit)
+    managedResource.map(_ => ())
     assert(!manager.onExceptionCalled)
     assert(manager.onFinallyCalled)
   }
